@@ -1,13 +1,13 @@
 import torch.nn as nn
 import torch 
-from mlp_utils import init_weights_normal
+from mlp_utils import init_weights_normal, init_weights_xavier, sine_init,first_layer_sine_init
 
 
 class MLPflat(nn.Module):
     """
     Initialises the neural network, and defines the method foward
     """
-    def __init__(self,in_dim: int, out_dim: int, num_hidden_layers, hidden_features):
+    def __init__(self,in_dim: int, out_dim: int, num_hidden_layers: int, hidden_features: int, initilaization = 'None'):
       super().__init__()
       assert(num_hidden_layers > 0)
       assert(hidden_features > 0)
@@ -19,11 +19,16 @@ class MLPflat(nn.Module):
         
       net += [nn.Linear(hidden_features,out_dim,bias=False)]
       
-      weights = init_weights_normal
+      weight_init = {'normal': init_weights_normal,'xavier':init_weights_xavier,'sine':sine_init,'first_layer':first_layer_sine_init}
+      weights = weight_init[initilaization]
       
 
       self.model = nn.Sequential(*net)
-      self.model.apply(weights)
+
+      if initilaization == 'None':
+        pass
+      else:
+        self.model.apply(weights)
 
       
 
