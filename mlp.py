@@ -19,8 +19,7 @@ class MLPflat(nn.Module):
         
       net += [nn.Linear(hidden_features,out_dim,bias=False)]
       
-      weight_init = {'normal': init_weights_normal,'xavier':init_weights_xavier,'sine':sine_init,'first_layer':first_layer_sine_init}
-      weights = weight_init[initilaization]
+      
       
 
       self.model = nn.Sequential(*net)
@@ -28,6 +27,8 @@ class MLPflat(nn.Module):
       if initilaization == 'None':
         pass
       else:
+        weight_init = {'normal': init_weights_normal,'xavier':init_weights_xavier,'sine':sine_init,'first_layer':first_layer_sine_init}
+        weights = weight_init[initilaization]
         self.model.apply(weights)
 
       
