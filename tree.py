@@ -36,6 +36,7 @@ class Tree(object):
         N: number of hidden layers
         H: 'Hight' of layer
         porcentage: porcentage for importance sampling
+        weightdecay: weightdecay
         importance_sampling: If you would like to do the sampling
         """
 
@@ -109,50 +110,58 @@ class Tree(object):
         del quadrants
         
 
-    
-    def evaluate(self,domain):
+    # Here is the problem
+    # try to remember how it works now before anything. 
+    def evaluate(self,eval_points):
+        
         with torch.no_grad():
             self.network.eval()
-            funValidationThisLevel = self.network(domain)
+            funValidationThisLevel = self.network(eval_points)
     
   
-        if not not self.childs:
+        if self.childs:
         
-            valquads = split_val_quadrants(domain,self)
+            eval_quadtrants = split_val_quadrants(eval_points,self)
             
             rec_fun = []
+            
             # Iterative function.
-            for i in range(0,len(valquads)):
-                rec_fun.append(self.childs[i].evaluate(valquads[i]))
+            for i in range(0,len(eval_quadtrants)):
+                rec_fun.append(self.childs[i].evaluate(eval_quadtrants[i]))
             
             tran_func = []
-            for i in range(0,len(valquads)):
-
-                tran_func.append(transform(valquads[i],rec_fun[i],domain))
+            for i in range(0,len(eval_quadtrants)):
+                # Si funciona
+                tran_func.append(transform(eval_quadtrants[i],rec_fun[i],eval_points))
             
             
             # Blend functions
             
-            if domain.shape[-1] ==1: 
-                xblendfunctions = createBlendFunction(domain,valquads,self) 
+            if eval_points.shape[-1] ==1: 
+                
+                xblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self) 
                 yblendfunctions = [1,1] 
                 zblendfunctions = [1,1]
-            elif domain.shape[-1] ==2: 
-                xblendfunctions = createBlendFunction(domain,valquads,self) 
-                yblendfunctions = createBlendFunction(domain,valquads,self,1) 
+
+            elif eval_points.shape[-1] ==2: 
+                
+                xblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self) 
+                yblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self,1) 
                 zblendfunctions = [1,1,1,1]
-            elif domain.shape[-1] ==3: 
-                xblendfunctions = createBlendFunction(domain,valquads,self) 
-                yblendfunctions = createBlendFunction(domain,valquads,self,1) 
-                zblendfunctions = createBlendFunction(domain,valquads,self,2)
+
+            elif eval_points.shape[-1] ==3: 
+                
+                xblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self) 
+                yblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self,1) 
+                zblendfunctions = createBlendFunction(eval_points,eval_quadtrants,self,2)
                 
             blendfunctions = []
             
-            for i in range(0,len(xblendfunctions)): blendfunctions.append(xblendfunctions[i]*yblendfunctions[i]*zblendfunctions[i])
+            for i in range(0,len(xblendfunctions)): blendfunctions.append(xblendfunctions[i]* yblendfunctions[i]* zblendfunctions[i])
 
 
             # Sum results
-            funSum = sumFunction(blendfunctions,tran_func,domain)
+            funSum = sumFunction(blendfunctions,tran_func,eval_points)
             
             
             

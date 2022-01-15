@@ -10,7 +10,7 @@ def linearfunction(X,m,b):
   return m*X+b
   
 def split_into_quadrants(points,tree, idx=0):
-    if idx < (points.shape[-1]-1):
+    if idx < (points.shape[-1]):
         #median = torch.median(points[:,idx])
         
         # This next code block I'm not sure about, how to how to find the exact value of the right value and the left value
@@ -138,35 +138,35 @@ def createBlendFunction(xValidationSorted,quads,tree,idx=0):
         for i in range(0,unique.shape[0]):
           indexes = torch.where(xValidationSorted[:,idx] == unique[i])[0]
           blend[indexes] = blend_unique[i]
-      # if idx == 0: 
-      #   plt.plot(unique.detach().cpu().numpy(),blend_unique.detach().cpu().numpy())
-      #   plt.show()
+      
       blendfunctions.append(blend.reshape((blend.shape[0],1)))
       
     
     return blendfunctions
 
-# TODO reshape on a better way. 
+# TODO Check if this transformation makes sense
 def transform(quad,func,xyVal):
     
     functs = torch.zeros((xyVal.shape[0],1)).to(device)
     if xyVal.shape[-1] ==1: 
       xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])    
       quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue))
-      functs[quadinbex] = func
+      functs[quadinbex] = func.float()
     elif xyVal.shape[-1] ==2: 
       xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])
       ymaxtvalue,yminvalue = torch.max(quad[:,1]),torch.min(quad[:,1])
 
       quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue) & (xyVal[:,1] <= ymaxtvalue) & (xyVal[:,1] >= yminvalue))
-      functs[quadinbex] = func
+      functs[quadinbex] = func.float()
     elif xyVal.shape[-1] ==3:
+      
       xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])
       ymaxtvalue,yminvalue = torch.max(quad[:,1]),torch.min(quad[:,1])
       zmaxtvalue,zminvalue = torch.max(quad[:,2]),torch.min(quad[:,2])
 
       quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue) & (xyVal[:,1] <= ymaxtvalue) & (xyVal[:,1] >= yminvalue) & (xyVal[:,2] <= zmaxtvalue) & (xyVal[:,2] >= zminvalue))
-      functs[quadinbex] = func
+      functs[quadinbex] = func.float()
+
     return functs
 
 def sumFunction(blendfunctions,fun,xyVal):
