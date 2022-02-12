@@ -98,12 +98,12 @@ class Tree(object):
         
             self.createChildren(2**in_dimesion)
             
-            for i in range(0,len(self.childs)):
-
-                ep = epochs * 2 # Not sure if to keep this
-                b = int(num_hidden_layers)
-                h = int(hidden_features)
-                self.childs[i].train(k+1,max_depth,quadrants[i],ep,in_dimesion,batchsize,errorTolerance,b,h,percentage_used_trained_importance,weightdecay,importance_sampling)
+            for i in range(0,self.childs): # TODO ITERATE OVER THE THE CHILDS, TO DO THIS I HAVE TO ADD THE QUADRANT INFORMATION TO THE TREE
+                ratio =int(quadrants[i].shape[0]/ksamples.shape[0])
+                epochs = int(epochs * ratio) 
+                num_hidden_layers = int(num_hidden_layers * ratio)
+                hidden_features = int(hidden_features * ratio)
+                self.childs[i].train(k+1,max_depth,quadrants[i],epochs,in_dimesion,batchsize,errorTolerance,num_hidden_layers,hidden_features,percentage_used_trained_importance,weightdecay,importance_sampling)
                 
         
         del quadrants
