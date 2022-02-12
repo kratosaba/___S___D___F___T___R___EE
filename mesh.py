@@ -18,7 +18,7 @@ class Mesh:
     def __init__(self,name):
         self.name = name
         self.mesh = self.upload()
-        self.corners = [self.mesh.vertices.min(0) - 1e-2, self.mesh.vertices.max(0) + 1e-2]
+        self.corners = [self.mesh.vertices.min(0) - 1e-1, self.mesh.vertices.max(0) + 1e-1]
         
 
     
@@ -52,6 +52,7 @@ class Mesh:
 
         
         implicit_sdf = implicit_sdf.reshape((np.cbrt(implicit_sdf.shape[0]).astype(np.int32),np.cbrt(implicit_sdf.shape[0]).astype(np.int32),np.cbrt(implicit_sdf.shape[0]).astype(np.int32)))
+        
         if not isinstance(implicit_sdf, np.ndarray) :
             implicit_sdf = implicit_sdf.detach().cpu().numpy()  
         
