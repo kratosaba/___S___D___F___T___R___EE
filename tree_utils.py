@@ -10,14 +10,19 @@ def linearfunction(X,m,b):
   return m*X+b
   
 def split_into_quadrants(points,tree, idx=0):
-    if idx < (points.shape[-1]):
+    cut_off = points.shape[-1]-1
+    # TODO This is a hack I have change this 
+    if cut_off == 2: 
+      cut_off = 3
+
+    if idx < (cut_off):
         #median = torch.median(points[:,idx])
         
         # This next code block I'm not sure about, how to how to find the exact value of the right value and the left value
         right =  torch.min(points[:,idx]) + (torch.max(points[:,idx]) - torch.min(points[:,idx]))*0.60 #question
         left =   torch.min(points[:,idx])+(torch.max(points[:,idx]) - torch.min(points[:,idx])) *0.40   
         
-        #print(idx)
+        
         if (tree.rigth_cut_off_values[idx]==1) and (tree.left_cut_off_values[idx]==1):
           tree.rigth_cut_off_values[idx]= right # question
           tree.left_cut_off_values[idx]= left

@@ -14,7 +14,7 @@ class Tree(object):
         self.network = None
         self.depth = None
         
-        self.rigth_cut_off_values = torch.ones(3)
+        self.rigth_cut_off_values = torch.ones(3) # add in_dimension to make it more general
         self.left_cut_off_values = torch.ones(3)
         self.diffFunction = None
 
@@ -51,10 +51,8 @@ class Tree(object):
         else:
             ksamples,validation=train_samples,train_samples
         
-        
         train_data = TensorDataset(ksamples[:,:in_dimesion], ksamples[:,in_dimesion])
     
-        #batchsize = int(ksamples.shape[0]*0.0024)
 
         if batchsize < 1:
             batchsize = 2
