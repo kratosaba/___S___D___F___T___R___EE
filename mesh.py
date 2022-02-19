@@ -51,13 +51,12 @@ class Mesh:
         spacingx,spacingy,spacingz = abs((c1[0])-(c0[0]))/dimensions,abs((c1[1])-(c0[1]))/dimensions,abs((c1[2])-(c0[2]))/dimensions
 
         
-        implicit_sdf = implicit_sdf.reshape((np.cbrt(implicit_sdf.shape[0]).astype(np.int32),np.cbrt(implicit_sdf.shape[0]).astype(np.int32),np.cbrt(implicit_sdf.shape[0]).astype(np.int32)))
+        implicit_sdf = implicit_sdf.reshape( (np.cbrt(implicit_sdf.shape[0]).astype(np.int32) ,np.cbrt(implicit_sdf.shape[0]).astype(np.int32), np.cbrt(implicit_sdf.shape[0]).astype(np.int32) ) )
         
         if not isinstance(implicit_sdf, np.ndarray) :
             implicit_sdf = implicit_sdf.detach().cpu().numpy()  
         
         iso_val= 0.005
-
         verts, faces,normals,values = measure.marching_cubes(implicit_sdf ,iso_val,spacing=(spacingz,spacingx,spacingy))
 
         
