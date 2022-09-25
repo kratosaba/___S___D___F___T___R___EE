@@ -14,7 +14,7 @@ class Tree(object):
         self.network = None
         self.depth = None
         
-        self.rigth_cut_off_values = torch.ones(3)
+        self.rigth_cut_off_values = torch.ones(3) # add in_dimension to make it more general
         self.left_cut_off_values = torch.ones(3)
         self.diffFunction = None
 
@@ -51,10 +51,8 @@ class Tree(object):
         else:
             ksamples,validation=train_samples,train_samples
         
-        
         train_data = TensorDataset(ksamples[:,:in_dimesion], ksamples[:,in_dimesion])
     
-        #batchsize = int(ksamples.shape[0]*0.0024)
 
         if batchsize < 1:
             batchsize = 2
@@ -98,12 +96,12 @@ class Tree(object):
         
             self.createChildren(2**in_dimesion)
             
-            for i in range(0,len(self.childs)):
-
-                ep = epochs * 2 # Not sure if to keep this
-                b = int(num_hidden_layers)
-                h = int(hidden_features)
-                self.childs[i].train(k+1,max_depth,quadrants[i],ep,in_dimesion,batchsize,errorTolerance,b,h,percentage_used_trained_importance,weightdecay,importance_sampling)
+            for i in range(0,self.childs): # TODO ITERATE OVER THE THE CHILDS, TO DO THIS I HAVE TO ADD THE QUADRANT INFORMATION TO THE TREE
+                ratio =int(quadrants[i].shape[0]/ksamples.shape[0])
+                epochs = int(epochs * ratio) 
+                num_hidden_layers = int(num_hidden_layers * ratio)
+                hidden_features = int(hidden_features * ratio)
+                self.childs[i].train(k+1,max_depth,quadrants[i],epochs,in_dimesion,batchsize,errorTolerance,num_hidden_layers,hidden_features,percentage_used_trained_importance,weightdecay,importance_sampling)
                 
         
         del quadrants
