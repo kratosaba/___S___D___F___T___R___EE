@@ -38,10 +38,11 @@ from grid import Grid
 from utils import save_experiment
 
 import numpy as np
-import random
-import trimesh
 import torch
 from sklearn.model_selection import ParameterGrid
+import math
+from trimesh import  transformations
+import meshing_utils
 
 def main():
     #setting gpu
@@ -97,9 +98,28 @@ def main():
         grid_sdf = mesh_tree.evaluate(torch.from_numpy(uniform_grid.grid.astype(np.float32)).to(device)) 
         
         # create a mesh reconstructed
-        # TODO before saving I should normalize the mesh, recenter the same as the original one
+        
         mesh_reconstructed = mesh.reconstruct(grid_sdf,150)
+        
+        # TODO create a normalazation function that works 
+        angle = math.pi / 2
+        direction_1 = [0, -1, 0]
+        direction_2 = [0, 0, -1]
+        center = [0, 0, 0]
+
+        rot_matrix_1 = transformations.rotation_matrix(angle, direction_1, center)
+        rot_matrix_2 = transformations.rotation_matrix(angle, direction_2, center)
+
+
+        mesh_reconstructed.apply_transform(rot_matrix_1)
+        mesh_reconstructed.apply_transform(rot_matrix_2)
+
+
+        meshing_utils.recenter_mesh(mesh_reconstructed)
+
+        # Saving the reconstruction for comparation to the reference mesh
         mesh_reconstructed.export(f'./reconstructions/dragon_reconstruction{num_experiment}.stl')
+        
         # calculate iou
         score = metrics.compute_iou('./models/dragon_final.ply',f'./reconstructions/dragon_reconstruction{num_experiment}.stl')
 
