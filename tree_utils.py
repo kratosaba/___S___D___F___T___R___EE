@@ -7,15 +7,17 @@ import numpy as np
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def linearfunction(X,m,b):
+  """
+  This defines a function called linearfunction that takes in three arguments: X, m, and b. The function returns the result of m * X + b
+  """
   return m*X+b
   
 def split_into_quadrants(points,tree, idx=0):
-    cut_off = points.shape[-1]-1
-    # TODO This is a hack I have change this 
-    if cut_off == 2: 
-      cut_off = 3
+    """
+    This defines a function called split_into_quadrants that takes in three arguments: points, tree, and idx. The function returns a list of points split into quadrants.
+    """
 
-    if idx < (cut_off):
+    if idx < points.shape[-1]-1:
         #median = torch.median(points[:,idx])
         
         # This next code block I'm not sure about, how to how to find the exact value of the right value and the left value
@@ -36,6 +38,10 @@ def split_into_quadrants(points,tree, idx=0):
       return [points]
 
 def split_val_quadrants(domain,tree, idnx=0):
+    # This function splits the given domain into quadrants based on the cut-off values in the provided tree and the given index.
+    # The domain is recursively split until the index reaches the end of the domain's dimensions.
+    # Returns a list of quadrants.
+
     if idnx < (domain.shape[-1]):
         right = tree.rigth_cut_off_values[idnx]
         left = tree.left_cut_off_values[idnx]
@@ -52,7 +58,9 @@ def split_val_quadrants(domain,tree, idnx=0):
       return [domain]
 
 def train_network(phi,train_loader,epochs,criterion,optimizer,depth):
-    
+    # This function trains the given network (phi) using the provided train data (train_loader), number of epochs, loss criterion, optimizer, and depth.
+    # For each epoch, the function loops through the batch of training data, optimizes the network's parameters, and calculates the loss.
+
     for epoch in range(epochs):
         batch = 0
         for x_batch, y_batch in train_loader:
@@ -73,6 +81,8 @@ def train_network(phi,train_loader,epochs,criterion,optimizer,depth):
               batch+=1
 
 def laplace_operator(Nsamples,r_nn,tol=10e-6):
+  # This function calculates the Laplacian operator for the given samples using a ball tree and tolerance value.
+  # It returns the Laplacian matrix.
   knn = BallTree(Nsamples,leaf_size = 5) 
   A=lil_matrix((Nsamples.shape[0],Nsamples.shape[0]) )
 
@@ -94,15 +104,16 @@ def laplace_operator(Nsamples,r_nn,tol=10e-6):
   return L
 
 def k_samples(k,samples,indim):
+  # This function selects the top k samples based on the Laplacian operator and removes them from the original samples.
+  # It returns the selected samples, their indexes, and the remaining samples.
   L = laplace_operator(samples[:,:indim],10)
   score = abs(L*samples[:,indim])
   indexes = score.argsort()[-int(k):][::-1]
   return samples[indexes], indexes,np.delete( samples,indexes,axis=0)
 
 def createBlendFunction(xValidationSorted,quads,tree,idx=0):
-  # I have to make a general way to create a blending function. 
-  
-    right= tree.rigth_cut_off_values[idx]
+   # This function creates a blending function for the given sorted validation data and quadrants, using the provided tree and index.
+   # It returns the blending function and unique values within the blending range.    right= tree.rigth_cut_off_values[idx]
     left = tree.left_cut_off_values[idx]
     
     inbetween = torch.where((xValidationSorted[:,idx] >= left) & (xValidationSorted[:,idx] <= right))[0]
@@ -151,30 +162,53 @@ def createBlendFunction(xValidationSorted,quads,tree,idx=0):
 
 # TODO Check if this transformation makes sense
 def transform(quad,func,xyVal):
-    
+    """
+    Applies the given function to the given validation data (xyVal) within the boundaries of the provided quadrant.
+    The quadrant's boundaries are determined by finding the minimum and maximum values for each dimension in the quadrant.
+
+    Parameters:
+    quad (torch tensor): Tensor containing the data for a quadrant.
+    func (torch tensor): Tensor containing a function to be applied to the data.
+    xyVal (torch tensor): Tensor containing the validation data.
+
+    Returns:
+    functs (torch tensor): Tensor containing the transformed data.
+    """
+
+    max = []
+    min = []
+    for dimension in range(0,xyVal.shape[-1]-1):
+        max.append(torch.max(quad[:,dimension]))
+        min.append(torch.min(quad[:,dimension]))
+
+
     functs = torch.zeros((xyVal.shape[0],1)).to(device)
+
     if xyVal.shape[-1] ==1: 
-      xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])    
-      quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue))
+      quadinbex = torch.where((xyVal[:,0] <= max[0]) & (xyVal[:,0] >= min[0]))
       functs[quadinbex] = func.float()
     elif xyVal.shape[-1] ==2: 
-      xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])
-      ymaxtvalue,yminvalue = torch.max(quad[:,1]),torch.min(quad[:,1])
-
-      quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue) & (xyVal[:,1] <= ymaxtvalue) & (xyVal[:,1] >= yminvalue))
+      quadinbex = torch.where((xyVal[:,0] <= max[0]) & (xyVal[:,0] >= min[0]) & (xyVal[:,1] <= max[1]) & (xyVal[:,1] >= min[1]))
       functs[quadinbex] = func.float()
     elif xyVal.shape[-1] ==3:
-      
-      xmaxtvalue,xminvalue = torch.max(quad[:,0]),torch.min(quad[:,0])
-      ymaxtvalue,yminvalue = torch.max(quad[:,1]),torch.min(quad[:,1])
-      zmaxtvalue,zminvalue = torch.max(quad[:,2]),torch.min(quad[:,2])
-
-      quadinbex = torch.where((xyVal[:,0] <= xmaxtvalue) & (xyVal[:,0] >= xminvalue) & (xyVal[:,1] <= ymaxtvalue) & (xyVal[:,1] >= yminvalue) & (xyVal[:,2] <= zmaxtvalue) & (xyVal[:,2] >= zminvalue))
+      quadinbex = torch.where((xyVal[:,0] <= max[0]) & (xyVal[:,0] >= min[0]) & (xyVal[:,1] <= max[1]) & (xyVal[:,1] >= min[1]) & (xyVal[:,2] <= max[2]) & (xyVal[:,2] >= max[2]))
       functs[quadinbex] = func.float()
 
     return functs
 
 def sumFunction(blendfunctions,fun,xyVal):
+  """
+  Calculates the sum of the given blend function and it's corresponding function.
+  The sum is calculated element-wise for each value in the given validation data (xyVal).
+
+  Parameters:
+  blendfunctions (list of torch tensors): List of tensors containing blend functions.
+  fun (list of torch tensors): List of tensors containing functions.
+  xyVal (torch tensor): Tensor containing the validation data.
+
+  Returns:
+  sumfuncts (torch tensor): Tensor containing the sum of the blend functions and functions.
+  """
   if fun[0].device.type == 'cpu':
     sumfuncts = torch.zeros((xyVal.shape[0],1))
   else:

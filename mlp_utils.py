@@ -2,20 +2,36 @@ import numpy as np
 from torch import nn
 import torch
 
-
 def init_weights_normal(m):
+    """
+    Initializes the weights of a given module using the Kaiming initialization method with a normal distribution.
+
+    Parameters:
+    m (nn.Module): PyTorch module to initialize the weights of.
+    """
     if type(m) == nn.Linear:
         if hasattr(m, 'weight'):
             nn.init.kaiming_normal_(m.weight, a=0.0, nonlinearity='relu', mode='fan_in')
 
-
 def init_weights_xavier(m):
+    """
+    Initializes the weights of a given module using the Xavier initialization method with a normal distribution.
+
+    Parameters:
+    m (nn.Module): PyTorch module to initialize the weights of.
+    """
     if type(m) == nn.Linear:
         if hasattr(m, 'weight'):
             nn.init.xavier_normal_(m.weight)
 
-
 def sine_init(m, w0=30):
+    """
+    Initializes the weights of a given module using a sine wave initialization method.
+
+    Parameters:
+    m (nn.Module): PyTorch module to initialize the weights of.
+    w0 (float): Frequency scaling factor for
+    """
     with torch.no_grad():
         if hasattr(m, 'weight'):
             num_input = m.weight.size(-1)

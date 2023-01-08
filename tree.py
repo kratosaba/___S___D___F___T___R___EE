@@ -6,38 +6,47 @@ from torch.utils.data import DataLoader
 
 class Tree(object):
     """
-    Creates a tree structure that contains in each node a MLP class.
-     
+    The Tree class represents a tree structure with multiple levels, where each level has a neural network associated with it. It has the following methods:
     """
     def __init__(self):
+        """
+        This is the constructor for the Tree class. It initializes the following instance variables:
+
+        childs: a list of Tree objects representing the children of the current node
+        network: the neural network associated with the current level of the tree
+        depth: the depth of the current level in the tree
+        right_cut_off_values: the cut-off values for the right child of the current node
+        left_cut_off_values: the cut-off values for the left child of the current node
+        diffFunction: the difference between the predicted output of the network and the true output
+        """
         self.childs = []
         self.network = None
         self.depth = None
         
-        self.rigth_cut_off_values = torch.ones(3) # add in_dimension to make it more general
+        self.rigth_cut_off_values = torch.ones(3) 
         self.left_cut_off_values = torch.ones(3)
         self.diffFunction = None
 
     def createChildren(self,amount):
+        """
+        This method creates amount children for the current node and appends them to the childs list.
+        """
         for i in range(0,amount):
             self.childs.append(Tree())
 
 
     def train(self,k,max_depth,train_samples,epochs,in_dimesion,batchsize,errorTolerance,num_hidden_layers, hidden_features,percentage_used_trained_importance=0.5,weightdecay=1e-6,importance_sampling=False):
         """
-        Training the tree:
-        k: current depthh
-        max_depth: maximum depth
-        train_samples: input training set
-        epochs
-        tree
-        batchsize
-        errorTolerance
-        N: number of hidden layers
-        H: 'Hight' of layer
-        percentage_used_trained_importance: percentage_used_trained_importance for importance sampling
-        weightdecay: weightdecay
-        importance_sampling: If you would like to do the sampling
+        This method trains the neural network associated with the current level of the tree. The training process involves the following steps:
+
+        1. Create a neural network with the specified number of input dimensions, hidden layers, and hidden features.
+        2. Define the loss function and the optimizer to be used during training.
+        3. If importance sampling is enabled, select a subset of the training samples and set them aside for validation. Otherwise, use all the samples for both training and validation.
+        4. Load the training data into a DataLoader and train the network using the specified number of epochs.
+        5. Evaluate the trained network on the validation data and compute the difference between the predicted and true outputs.
+        6. Split the validation data into quadrants and store the resulting quadrants in the quadrants variable.
+        7. If the current depth is less than the maximum depth or the absolute error of the network is greater than the error tolerance, create children for the current node and train them using the quadrants data.
+        
         """
 
         phi = MLPflat(in_dimesion, 1,num_hidden_layers, hidden_features).to(device) # GPU
@@ -58,14 +67,14 @@ class Tree(object):
             batchsize = 2
 
         train_loader = DataLoader(dataset=train_data, batch_size= batchsize, shuffle=True)
-        # Train
+        
         phi.train()
 
         train_network(phi,train_loader,epochs,criterion,optimizer,k)    
         
         del train_data,train_loader
         
-        # Phi getting evaluated 
+         
         with torch.no_grad():
             phi.eval()
             
@@ -96,7 +105,7 @@ class Tree(object):
         
             self.createChildren(2**in_dimesion)
             
-            for i in range(0,self.childs): # TODO ITERATE OVER THE THE CHILDS, TO DO THIS I HAVE TO ADD THE QUADRANT INFORMATION TO THE TREE
+            for i in range(0,self.childs): 
                 ratio =int(quadrants[i].shape[0]/ksamples.shape[0])
                 epochs = int(epochs * ratio) 
                 num_hidden_layers = int(num_hidden_layers * ratio)
@@ -107,8 +116,7 @@ class Tree(object):
         del quadrants
         
 
-    # Here is the problem
-    # try to remember how it works now before anything. 
+     
     def evaluate(self,eval_points):
         
         with torch.no_grad():
@@ -122,17 +130,17 @@ class Tree(object):
             
             rec_fun = []
             
-            # Iterative function.
+            
             for i in range(0,len(eval_quadtrants)):
                 rec_fun.append(self.childs[i].evaluate(eval_quadtrants[i]))
             
             tran_func = []
             for i in range(0,len(eval_quadtrants)):
-                # Si funciona
+                
                 tran_func.append(transform(eval_quadtrants[i],rec_fun[i],eval_points))
             
             
-            # Blend functions
+           
             
             if eval_points.shape[-1] ==1: 
                 
@@ -157,7 +165,7 @@ class Tree(object):
             for i in range(0,len(xblendfunctions)): blendfunctions.append(xblendfunctions[i]* yblendfunctions[i]* zblendfunctions[i])
 
 
-            # Sum results
+            
             funSum = sumFunction(blendfunctions,tran_func,eval_points)
             
             
@@ -165,5 +173,5 @@ class Tree(object):
             del rec_fun,blendfunctions
             return funSum + funValidationThisLevel
         else:
-            #print(self.depth)
+            
             return funValidationThisLevel
