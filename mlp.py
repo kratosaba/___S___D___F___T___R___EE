@@ -40,8 +40,7 @@ class MLPflat(nn.Module):
         pass
       else:
         weight_init = {'normal': init_weights_normal,'xavier':init_weights_xavier,'sine':sine_init,'first_layer':first_layer_sine_init}
-        weights = weight_init[initilaization]
-        self.model.apply(weights)
+        self.model.apply(weight_init[initilaization])
 
       
 
